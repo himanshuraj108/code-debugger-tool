@@ -10,7 +10,7 @@ app = Flask(__name__)
 CORS(app)  # Enable CORS for frontend communication
 
 # Set up Gemini API key
-GEMINI_API_KEY = "AIzaSyDjAf4HDz1L1YhtZk-vl1aHeQ8mTLoAEoA"  # Replace with your actual API key
+GEMINI_API_KEY = "YOUR_API_KEY"  # Replace with your actual API key
 genai.configure(api_key=GEMINI_API_KEY)
 
 # Route to debug code and generate questions
