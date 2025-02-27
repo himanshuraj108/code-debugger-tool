@@ -7,454 +7,86 @@
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"
+
     />
-    <style>
-      body {
-        font-family: "Roboto", sans-serif;
-        margin: 0;
-        padding: 0;
-        background-color: #f4f6f9;
-        color: #333;
-      }
-
-      h2 {
-        text-align: center;
-        margin: 20px 0;
-        color: #444;
-      }
-
-      .marquee {
-        width: 100%;
-        overflow: hidden;
-        white-space: nowrap;
-        box-sizing: border-box;
-        background-color: #007bff;
-        color: #fff;
-        padding: 10px 0;
-        font-size: 18px;
-      }
-
-      .marquee span {
-        display: inline-block;
-        padding-left: 100%;
-        animation: marquee 30s linear infinite;
-      }
-
-      @keyframes marquee {
-        50% {
-          transform: translateX(100%);
-        }
-        50% {
-          transform: translateX(-100%);
-        }
-      }
-
-      .container {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: space-between;
-        align-items: flex-start;
-        gap: 20px;
-        padding: 0 20px;
-      }
-
-      #debugger,
-      #questions {
-        flex: 1;
-        min-width: 300px;
-        max-width: 48%;
-        padding: 20px;
-        border: 1px solid #ccc;
-        border-radius: 8px;
-        background-color: #fff;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-      }
-
-      .textarea-container {
-        position: relative;
-      }
-
-      textarea {
-        width: 100%;
-        height: 200px;
-        font-size: 16px;
-        padding: 15px;
-        border: 1px solid #ccc;
-        border-radius: 5px;
-        box-sizing: border-box;
-        resize: none;
-        font-family: "Courier New", monospace;
-        background-color: #f8f8f8;
-        transition: border-color 0.3s;
-      }
-
-      .copy-icon,
-      .paste-icon {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        cursor: pointer;
-        margin: 5px;
-      }
-
-      textarea:focus {
-        border-color: #007bff;
-        outline: none;
-      }
-
-      input,
-      select,
-      button {
-        width: 100%;
-        margin-top: 10px;
-        padding: 15px;
-        font-size: 16px;
-        cursor: pointer;
-        border: 1px solid #ccc;
-        border-radius: 5px;
-        background-color: #007bff;
-        color: #fff;
-        transition: background-color 0.3s, border-color 0.3s;
-      }
-
-      input:focus,
-      select:focus,
-      button:focus {
-        border-color: #0056b3;
-        outline: none;
-      }
-
-      select:hover,
-      button:hover {
-        background-color: #0056b3;
-      }
-
-      .success-output {
-        color: green;
-        background-color: #d4edda;
-        border: 1px solid #c3e6cb;
-        padding: 15px;
-        border-radius: 5px;
-        margin-top: 10px;
-        white-space: pre-wrap;
-      }
-
-      .error-output {
-        color: red;
-        background-color: #f8d7da;
-        border: 1px solid #f5c6cb;
-        padding: 15px;
-        border-radius: 5px;
-        margin-top: 10px;
-        white-space: pre-wrap;
-      }
-
-      .output-section {
-        margin-top: 20px;
-        position: relative;
-      }
-
-      .confirmation {
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        z-index: 9999;
-        color: red;
-        background-color: #f8d7da;
-        border: 1px solid #f5c6cb;
-        padding: 20px;
-        border-radius: 5px;
-        text-align: center;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-      }
-
-      .blur-background {
-        filter: blur(5px);
-      }
-
-      .confirmation p {
-        margin: 0;
-        padding-bottom: 10px;
-      }
-
-      .confirmation-buttons {
-        display: flex;
-        gap: 10px;
-      }
-
-      ul {
-        padding-left: 20px;
-      }
-
-      li {
-        margin-bottom: 8px;
-      }
-
-      #output {
-        margin-top: 20px;
-        overflow: auto;
-      }
-
-      .spinner {
-        margin: 20px auto;
-        width: 40px;
-        height: 40px;
-        border: 5px solid #f3f3f3;
-        border-radius: 50%;
-        border-top: 5px solid #007bff;
-        animation: spin 0.5s linear infinite;
-      }
-
-      @keyframes spin {
-        0% {
-          transform: rotate(0deg);
-        }
-        100% {
-          transform: rotate(360deg);
-        }
-      }
-
-      @media (max-width: 768px) {
-        .container {
-          flex-direction: column;
-          padding: 0 10px;
-        }
-
-        #debugger,
-        #questions {
-          max-width: 100%;
-        }
-
-        textarea {
-          height: 150px;
-        }
-      }
-
-      .button-group {
-        display: flex;
-        gap: 10px;
-      }
-
-      #user-input {
-        width: 100%;
-        color: black;
-        height: 40px; /* Adjust height for user input area */
-        font-size: 16px;
-        padding: 10px;
-        border: 1px solid #ccc;
-        border-radius: 5px;
-        background-color: #f8f8f8;
-        font-family: "Courier New", monospace;
-        box-sizing: border-box;
-        transition: border-color 0.3s;
-      }
-
-      #user-input:focus {
-        border-color: #007bff;
-        outline: none;
-      }
-    </style>
-  </head>
+    <link rel="stylesheet" href="style.css"/>
+      </head>
   <body>
+  
+
     <h2>Code Debugger Tool</h2>
+    <i class="fas fa-history" id="watch-history-icon" onclick="toggleWatchHistory()"></i>
+
+    <div id="watch-history">
+        <!-- <strong>Watch History:</strong> -->
+        <ul id="watch-history-list"></ul>
+        <button onclick="clearHistory()">Clear History</button>
+    </div>
+
+    <div class="confirmation" id="history-confirmation" style="display: none;">
+      <p>Are you sure you want to paste this code into the compiler?</p>
+      <div class="confirmation-buttons">
+          <button id="history-confirm-yes">Yes</button>
+          <button id="history-confirm-no">No</button>
+      </div>
+  </div>
+
+  <div class="confirmation" id="confirmation" style="display: none;">
+      <p>Your code is wrong. Do you want the correct code?</p>
+      <div class="confirmation-buttons">
+          <button onclick="getCorrectCode()">Yes</button>
+          <button onclick="dismissConfirmation()">No</button>
+      </div>
+  </div>
 
     <div class="marquee">
-      <span>Questions will be dynamically generated based on your code</span>
+        <span>Questions will be dynamically generated based on your code</span>
     </div>
 
     <div class="container" id="main-container">
-      <div id="debugger">
-        <div class="textarea-container">
-          <textarea
-            id="code"
-            placeholder="Enter your code here..."
-            oninput="autoResize(this)"
-          ></textarea>
-          <i class="fas fa-paste paste-icon" id="pasteCodeBtn" onclick="pasteText('code')"></i>
+        <div id="debugger">
+            <div class="textarea-container">
+                <textarea id="code" placeholder="Enter your code here..." oninput="autoResize(this)"></textarea>
+                <i class="fas fa-paste paste-icon" id="pasteCodeBtn" onclick="pasteText('code')"></i>
+            </div>
+            <select id="language">
+                <option value="python">Python</option>
+                <option value="cpp">C++</option>
+                <option value="c">C</option>
+            </select>
+            <input type="text" id="user-input" placeholder="Enter your input here (if applicable)" />
+            <div class="button-group">
+                <button id="runCodeBtn" onclick="debugCode()">
+                    <span id="buttonText">Run Code</span>
+                </button>
+                <button id="autoCorrectBtn" style="display:none;" onclick="autoCorrectCode()">
+                    <span id="autoCorrectText">Correct Code</span>
+                </button>
+            </div>
+            <div id="output">Your output will be displayed here</div>
+            <div class="output-section">
+                <strong>Corrected Code:</strong>
+                <div class="textarea-container">
+                    <pre id="corrected-code"></pre>
+                    <i class="fas fa-copy copy-icon" id="copyCorrectedCodeBtn" onclick="copyText('corrected-code')" style="display: none;"></i>
+                </div>
+            </div>
         </div>
-        <select id="language">
-          <option value="python">Python</option>
-          <option value="cpp">C++</option>
-          <!-- <option value="java">Java</option> -->
-          <option value="c">C</option>
-        </select>
-        <input
-          type="text"
-          id="user-input"
-          placeholder="Enter your input here (if applicable)"
-        />
-        <div class="button-group">
-          <button id="runCodeBtn" onclick="debugCode()">
-            <span id="buttonText">Run Code</span>
-          </button>
-          <button id="autoCorrectBtn" style="display:none;" onclick="autoCorrectCode()">
-            <span id="autoCorrectText">Correct Code</span>
-          </button>
-        </div>
-        <div id="output"></div>
-        <div class="output-section">
-          <strong>Corrected Code:</strong>
-          <div class="textarea-container">
-            <pre id="corrected-code"></pre>
-            <i class="fas fa-copy copy-icon" id="copyCorrectedCodeBtn" onclick="copyText('corrected-code')" style="display: none;"></i>
-          </div>
-        </div>
-      </div>
 
-      <div id="questions">
-        <strong>Generated Questions:</strong>
-        <div class="spinner" id="spinner" style="display: none"></div>
-        <ul id="questions-list">
-      </div>
+        <div id="questions">
+            <strong>Generated Questions:</strong>
+            <div class="spinner" id="spinner" style="display: none"></div>
+            <ul id="questions-list"></ul>
+        </div>
     </div>
 
     <div class="confirmation" id="confirmation" style="display: none;">
-      <p>Your code is wrong. Do you want the correct code?</p>
-      <div class="confirmation-buttons">
-        <button onclick="getCorrectCode()">Yes</button>
-        <button onclick="dismissConfirmation()">No</button>
-      </div>
+        <p>Your code is wrong. Do you want the correct code?</p>
+        <div class="confirmation-buttons">
+            <button onclick="getCorrectCode()">Yes</button>
+            <button onclick="dismissConfirmation()">No</button>
+        </div>
     </div>
-  </div>
-
-  <script>
-    // Auto-resize textarea based on input content
-    function autoResize(textarea) {
-      textarea.style.height = "auto";
-      textarea.style.height = textarea.scrollHeight + "px";
-    }
-
-    async function debugCode() {
-      const code = document.getElementById("code").value;
-      const language = document.getElementById("language").value;
-      const userInput = document.getElementById("user-input").value;
-      const outputDiv = document.getElementById("output");
-      const questionsDiv = document.getElementById("questions-list");
-      const spinner = document.getElementById("spinner");
-      const button = document.getElementById("runCodeBtn");
-      const buttonText = document.getElementById("buttonText");
-      const autoCorrectBtn = document.getElementById("autoCorrectBtn");
-
-      outputDiv.innerHTML = "Your output will be displayed here";
-      questionsDiv.innerHTML = "";
-      spinner.style.display = "block";
-      buttonText.innerHTML = "Running";
-      autoCorrectBtn.style.display = "none";
-
-      const response = await fetch("http://127.0.0.1:5000/debug", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ code, language, user_input: userInput }),
-      });
-
-      const result = await response.json();
-
-      if (result.output) {
-        outputDiv.innerHTML = `<pre class="success-output">${result.output}</pre>`;
-      } else if (result.error) {
-        document.getElementById("main-container").classList.add("blur-background");
-        document.getElementById("confirmation").style.display = "flex";
-        outputDiv.innerHTML = `<pre class="error-output">${result.error}</pre>`;
-      }
-
-      // Display Generated Questions
-      if (result.questions) {
-        questionsDiv.innerHTML = result.questions
-          .map((q) => `<li>${q}</li>`)
-          .join("");
-      } else {
-        questionsDiv.innerHTML = "<li>No questions generated</li>";
-      }
-
-      spinner.style.display = "none";
-
-      // Disable button to prevent multiple clicks
-      button.disabled = true;
-
-      try {
-        // Simulate code execution delay (replace with actual execution logic)
-        await new Promise((resolve) => setTimeout(resolve, 0));
-
-        // After execution, restore the button text
-        buttonText.innerHTML = "Run Code";
-      } catch (error) {
-        buttonText.innerHTML = "Run Code";
-      }
-
-      // Re-enable button after execution
-      button.disabled = false;
-    }
-
-    async function autoCorrectCode() {
-      const code = document.getElementById("code").value;
-      const correctedCodeDiv = document.getElementById("corrected-code");
-      const autoCorrectText = document.getElementById("autoCorrectText");
-      autoCorrectText.innerHTML = "Correcting";
-
-      const response = await fetch("http://127.0.0.1:5000/autocorrect", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ code: code }),
-      });
-
-      const result = await response.json();
-
-      if (result.corrected_code) {
-        correctedCodeDiv.innerHTML = result.corrected_code;
-        autoResize(correctedCodeDiv); // Auto resize after correction
-        document.getElementById("copyCorrectedCodeBtn").style.display = "block";
-      } else {
-        correctedCodeDiv.innerHTML = "No correction available.";
-      }
-
-      // After correction, restore the button text
-      autoCorrectText.innerHTML = "Auto Correct";
-    }
-
-    function copyText(elementId) {
-      const element = document.getElementById(elementId);
-      const range = document.createRange();
-      range.selectNodeContents(element);
-      const selection = window.getSelection();
-      selection.removeAllRanges();
-      selection.addRange(range);
-      document.execCommand('copy');
-      const copyBtn = document.getElementById('copyCorrectedCodeBtn');
-      copyBtn.innerHTML = '<i class="fas fa-check"></i>';
-      setTimeout(() => {
-        copyBtn.innerHTML = '<i class="fas fa-copy"></i>';
-      }, 2000);
-    }
-
-    function pasteText(elementId) {
-      const element = document.getElementById(elementId);
-      navigator.clipboard.readText().then(text => {
-        element.value = text;
-        autoResize(element); // Auto resize after pasting
-      });
-    }
-
-    function getCorrectCode() {
-      document.getElementById("autoCorrectBtn").style.display = "block";
-      document.getElementById("autoCorrectBtn").style.backgroundColor = "green";
-      document.getElementById("autoCorrectBtn").disabled = false;
-      document.getElementById("main-container").classList.remove("blur-background");
-      document.getElementById("confirmation").style.display = "none";
-    }
-
-    function dismissConfirmation() {
-      document.getElementById("main-container").classList.remove("blur-background");
-      document.getElementById("confirmation").style.display = "none";
-    }
-  </script>
+  <script src="script.js"></script>
 </body>
 </html>
