@@ -15,7 +15,13 @@ os.environ["GEMINI_API_KEY"] = GEMINI_API_KEY  # Set the environment variable
 app = Flask(__name__)
 CORS(app)  # Enable CORS for frontend communication
 
+<<<<<<< HEAD
 genai.configure(api_key=os.environ["GEMINI_API_KEY"])
+=======
+# Set up Gemini API key
+GEMINI_API_KEY = "YOUR_API_KEY"  # Replace with your actual API key
+genai.configure(api_key=GEMINI_API_KEY)
+>>>>>>> 84c5b25c2da2751b0ae1afc416e9228f49c45543
 
 # Route to debug code and generate questions
 @app.route('/debug', methods=['POST'])
