@@ -11,6 +11,32 @@
     <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+
+    <header>
+        <a href="#" id="showFeaturesLink">Show Features</a>
+        <nav>
+            <!-- Your other nav items -->
+        </nav>
+    </header>
+    <main id="main-container">
+        <!-- Your main content -->
+    </main>
+    <div id="features-popup" class="popup">
+        <div class="popup-content">
+            <h2>Features</h2>
+            <ul>
+                
+                <li>Code Debugging: Debug code in multiple languages and view output.</li>
+                <li>Execution Visualization: Visualize code execution steps (Python only).</li>
+                <li>Question Generation: Automatically generate questions based on code.</li>
+                <li>Auto-correct: Automatically correct code errors and provide suggestions.</li>
+                <li>Clipboard Integration: Copy and paste code directly from clipboard.</li>
+                <li>Watch History: Save and manage a history of code executions.</li>
+                <li>Interactive Interface: Toggle features like visualizer and question generation.</li>
+            </ul>
+            <button id="closePopupBtn">Close</button>
+        </div>
+    </div>
     <h2>Code Debugger Tool</h2>
     <i
         class="fas fa-history"
@@ -112,7 +138,7 @@
             </div>
 
             <div id="visualization">
-                <strong>Code Visualization:</strong>
+                <strong>Code Visualization: (python support)</strong>
                 <i class="fas fa-toggle-off" id="visualizer-toggle"></i>
                 <div id="visualization-output"></div>
             </div>

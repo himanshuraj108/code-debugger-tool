@@ -42,6 +42,12 @@ document.addEventListener("DOMContentLoaded", () => {
         questionsToggle.classList.toggle('fa-toggle-off', !questionsEnabled);
         questionsToggle.style.color = questionsEnabled ? 'blue' : '';
     });
+
+    const modeToggle = document.querySelector('.mode-toggle');
+    const modeIcon = document.getElementById('mode-icon');
+    const body = document.body;
+
+    updateHistoryDisplay();
 });
 
 async function debugCode() {
@@ -55,13 +61,16 @@ async function debugCode() {
     const buttonText = document.getElementById("buttonText");
     const autoCorrectBtn = document.getElementById("autoCorrectBtn");
     const visualizationDiv = document.getElementById("visualization-output");
+    const correctedCodeDiv = document.getElementById("corrected-code");
 
+    // Refresh parts when running the code
     outputDiv.innerHTML = "Your output will be displayed here";
     questionsDiv.innerHTML = "";
+    visualizationDiv.innerHTML = "";
+    correctedCodeDiv.innerHTML = "";
     if (questionsEnabled) spinner.style.display = "block";
     buttonText.innerHTML = "Running";
     autoCorrectBtn.style.display = "none";
-    visualizationDiv.innerHTML = "";
 
     try {
         const response = await fetch("http://127.0.0.1:5000/debug", {
@@ -80,23 +89,37 @@ async function debugCode() {
 
         if (result.output) {
             outputDiv.innerHTML = `<pre class="success-output">${result.output}</pre>`;
+
+            // Indicate that question generation is enabled
+            if (questionsEnabled) {
+                questionsDiv.innerHTML = result.questions
+                    .map((q) => `<li>${q}</li>`)
+                    .join("");
+            } else {
+                questionsDiv.innerHTML = "<li>No questions generated</li>";
+            }
+
+            // Visualize the code
+            if (visualizerEnabled && result.execution_steps) {
+                animateExecution(result.execution_steps, code);
+            } else {
+                visualizationDiv.innerHTML = `<pre></pre>`;
+            }
         } else if (result.error) {
             document.getElementById("main-container").classList.add("blur-background");
             document.getElementById("confirmation").style.display = "flex";
             outputDiv.innerHTML = `<pre class="error-output">${result.error}</pre>`;
         }
 
-        if (questionsEnabled && result.questions) {
-            questionsDiv.innerHTML = result.questions
-                .map((q) => `<li>${q}</li>`)
-                .join("");
-        } else {
-            questionsDiv.innerHTML = "<li>No questions generated</li>";
-        }
+        // Save to history
+        const historyItem = {
+            code: code,
+            status: result.output ? "success" : "error",
+            source: "run",
+        };
+        watchHistory.push(historyItem);
+        updateHistoryDisplay();
 
-        if (visualizerEnabled && result.execution_steps) {
-            animateExecution(result.execution_steps, code);
-        }
     } catch (error) {
         console.error("Error during fetch operation:", error);
         outputDiv.innerHTML = `<pre class="error-output">Failed to run code. Please try again.</pre>`;
@@ -113,14 +136,6 @@ async function debugCode() {
     }
 
     button.disabled = false;
-
-    const historyItem = {
-        code: code,
-        status: result.output ? "success" : "error",
-        source: "run",
-    };
-    watchHistory.push(historyItem);
-    updateHistoryDisplay();
 }
 
 function animateExecution(steps, fullCode) {
@@ -145,76 +160,6 @@ function animateExecution(steps, fullCode) {
             clearInterval(interval);
         }
     }, 1000);
-}
-
-// CSS for smooth transitions
-const style = document.createElement('style');
-style.innerHTML = `
-    .highlight {
-        background-color: yellow;
-        transition: background-color 0.5s ease;
-    }
-`;
-document.head.appendChild(style);
-
-async function autoCorrectCode() {
-    const code = document.getElementById("code").value;
-    const correctedCodeDiv = document.getElementById("corrected-code");
-    const autoCorrectText = document.getElementById("autoCorrectText");
-    autoCorrectText.innerHTML = "Correcting";
-
-    try {
-        const response = await fetch("http://127.0.0.1:5000/autocorrect", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ code: code }),
-        });
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const result = await response.json();
-
-        if (result.corrected_code) {
-            correctedCodeDiv.innerHTML = result.corrected_code;
-            autoResize(correctedCodeDiv);
-            document.getElementById("copyCorrectedCodeBtn").style.display = "block";
-        } else {
-            correctedCodeDiv.innerHTML = "No correction available.";
-        }
-    } catch (error) {
-        console.error("Error during fetch operation:", error);
-        correctedCodeDiv.innerHTML = "Failed to auto-correct code. Please try again.";
-    }
-
-    autoCorrectText.innerHTML = "Auto Correct";
-
-    // Save history when auto-correct code
-    const historyItem = {
-        code: document.getElementById("code").value,
-        status: result.corrected_code ? "auto-corrected" : "no-correction",
-        source: "auto-correct",
-    };
-    watchHistory.push(historyItem);
-    updateHistoryDisplay();
-}
-
-function copyText(elementId) {
-    const element = document.getElementById(elementId);
-    const range = document.createRange();
-    range.selectNodeContents(element);
-    const selection = window.getSelection();
-    selection.removeAllRanges();
-    selection.addRange(range);
-    document.execCommand('copy');
-    const copyBtn = document.getElementById('copyCorrectedCodeBtn');
-    copyBtn.innerHTML = '<i class="fas fa-check"></i>';
-    setTimeout(() => {
-        copyBtn.innerHTML = '<i class="fas fa-copy"></i>';
-    }, 2000);
 }
 
 function pasteText(elementId) {
@@ -290,45 +235,85 @@ function clearHistory() {
     });
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    const modeToggle = document.querySelector('.mode-toggle');
-    const modeIcon = document.getElementById('mode-icon');
-    const body = document.body;
+async function autoCorrectCode() {
+    const code = document.getElementById("code").value;
+    const correctedCodeDiv = document.getElementById("corrected-code");
+    const autoCorrectText = document.getElementById("autoCorrectText");
+    autoCorrectText.innerHTML = "Correcting";
 
-    // Add event listeners for confirmation buttons only after the DOM is fully loaded
-    document.getElementById("history-confirm-yes").addEventListener("click", confirmYesHandler);
-    document.getElementById("history-confirm-no").addEventListener("click", confirmNoHandler);
+    try {
+        const response = await fetch("http://127.0.0.1:5000/autocorrect", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ code: code }),
+        });
 
-    function confirmYesHandler() {
-        const code = watchHistory[selectedHistoryIndex].code;
-        const codeTextArea = document.getElementById("code");
-        codeTextArea.value = code;
-        autoResize(codeTextArea);
-        document.getElementById("history-confirmation").style.display = "none";
-        document.getElementById("main-container").classList.remove("blur-background");
-        toggleWatchHistory();
-        selectedHistoryIndex = null;
-    }
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
 
-    function confirmNoHandler() {
-        document.getElementById("history-confirmation").style.display = "none";
-        document.getElementById("main-container").classList.remove("blur-background");
-        selectedHistoryIndex = null;
-    }
+        const result = await response.json();
 
-    document.getElementById("clear-history-yes").addEventListener("click", clearHistoryYesHandler);
-    document.getElementById("clear-history-no").addEventListener("click", clearHistoryNoHandler);
+        if (result.corrected_code) {
+            correctedCodeDiv.innerHTML = result.corrected_code;
+            autoResize(correctedCodeDiv);
+            document.getElementById("copyCorrectedCodeBtn").style.display = "block";
+        } else {
+            correctedCodeDiv.innerHTML = "No correction available.";
+        }
 
-    function clearHistoryYesHandler() {
-        watchHistory = [];
-        localStorage.removeItem("watchHistory");
+        // Save history when auto-correct code
+        const historyItem = {
+            code: code,
+            status: result.corrected_code ? "auto-corrected" : "no-correction",
+            source: "auto-correct",
+        };
+        watchHistory.push(historyItem);
         updateHistoryDisplay();
-        document.getElementById("clear-history-confirmation").style.display = "none";
-        document.getElementById("main-container").classList.remove("blur-background");
+
+    } catch (error) {
+        console.error("Error during fetch operation:", error);
+        correctedCodeDiv.innerHTML = "Failed to auto-correct code. Please try again.";
     }
 
-    function clearHistoryNoHandler() {
-        document.getElementById("clear-history-confirmation").style.display = "none";
-        document.getElementById("main-container").classList.remove("blur-background");
+    autoCorrectText.innerHTML = "Auto Correct";
+}
+
+function copyText(elementId) {
+    const element = document.getElementById(elementId);
+    const range = document.createRange();
+    range.selectNodeContents(element);
+    const selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+    document.execCommand('copy');
+    const copyBtn = document.getElementById('copyCorrectedCodeBtn');
+    copyBtn.innerHTML = '<i class="fas fa-check"></i>';
+    setTimeout(() => {
+        copyBtn.innerHTML = '<i class="fas fa-copy"></i>';
+    }, 2000);
+}
+
+// CSS for smooth transitions
+const style = document.createElement('style');
+style.innerHTML = `
+    .highlight {
+        background-color: yellow;
+        transition: background-color 0.5s ease;
     }
+`;
+document.head.appendChild(style);
+
+document.getElementById('showFeaturesLink').addEventListener('click', (e) => {
+    e.preventDefault();
+    document.getElementById('features-popup').style.display = 'flex';
+    document.getElementById('main-container').classList.add('blur-background');
 });
+
+document.getElementById('closePopupBtn').addEventListener('click', () => {
+    document.getElementById('features-popup').style.display = 'none';
+    document.getElementById('main-container').classList.remove('blur-background');
+});
+
