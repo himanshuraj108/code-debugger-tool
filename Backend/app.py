@@ -1,29 +1,15 @@
 import os
 import subprocess
 import tempfile
-import google.generativeai as genai
+import requests
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import requests
 import sys
+import ast
 
-# Set up Gemini API key
-GEMINI_API_KEY = "AIzaSyDetzfkniI_VB2_jNtYjCXXOolhquNGAmw"  # Your provided API key
-os.environ["GEMINI_API_KEY"] = GEMINI_API_KEY  # Set the environment variable
-
-# Initialize Flask app
 app = Flask(__name__)
-CORS(app)  # Enable CORS for frontend communication
+CORS(app)
 
-<<<<<<< HEAD
-genai.configure(api_key=os.environ["GEMINI_API_KEY"])
-=======
-# Set up Gemini API key
-GEMINI_API_KEY = "YOUR_API_KEY"  # Replace with your actual API key
-genai.configure(api_key=GEMINI_API_KEY)
->>>>>>> 84c5b25c2da2751b0ae1afc416e9228f49c45543
-
-# Route to debug code and generate questions
 @app.route('/debug', methods=['POST'])
 def debug_code():
     data = request.get_json()
@@ -34,19 +20,26 @@ def debug_code():
     if not code or not language:
         return jsonify({"error": "Code or language missing"}), 400
 
-    # Execute the code
     output_response = execute_code(code, language, user_input)
-
-    # Generate questions using the Gemini API
     questions = generate_questions(code)
+
+    try:
+        tree = ast.parse(code)
+        execution_steps = generate_execution_steps(tree, code)
+    except SyntaxError as e:
+        return jsonify({
+            "output": output_response.get("output", ""),
+            "error": output_response.get("error", str(e)),
+            "questions": questions
+        })
 
     return jsonify({
         "output": output_response.get("output", ""),
         "error": output_response.get("error", ""),
-        "questions": questions
+        "questions": questions,
+        "execution_steps": execution_steps,
     })
 
-# Route to auto-correct code
 @app.route('/autocorrect', methods=['POST'])
 def auto_correct_code():
     data = request.get_json()
@@ -55,14 +48,12 @@ def auto_correct_code():
     if not code:
         return jsonify({"error": "Code missing"}), 400
 
-    # Auto-correct the code using Gemini API
-    corrected_code = correct_code_using_gemini(code)
+    corrected_code = correct_code_using_mistral(code)
 
     return jsonify({
         "corrected_code": corrected_code
     })
 
-# Function to execute code based on language
 def execute_code(code, language, user_input=""):
     try:
         with tempfile.NamedTemporaryFile(suffix=f'.{language}', delete=False) as temp_file:
@@ -70,7 +61,7 @@ def execute_code(code, language, user_input=""):
             temp_file.close()
 
             if language == "python":
-                python_executable = sys.executable  # Correct Python version
+                python_executable = sys.executable
                 result = subprocess.run([python_executable, temp_file.name], input=user_input.encode(), capture_output=True, text=True)
             elif language == "cpp":
                 exe_file = temp_file.name.replace('.cpp', '.exe')
@@ -82,13 +73,13 @@ def execute_code(code, language, user_input=""):
                 class_name = extract_java_class_name(code)
                 if not class_name:
                     return {"error": "No public class found in Java code."}
-                
+
                 temp_dir = os.path.dirname(temp_file.name)
                 java_file_name = f"{temp_dir}/{class_name}.java"
-                
+
                 if os.path.exists(java_file_name):
                     os.remove(java_file_name)
-                
+
                 os.rename(temp_file.name, java_file_name)
 
                 if not os.path.exists(java_file_name):
@@ -116,71 +107,86 @@ def execute_code(code, language, user_input=""):
     except Exception as e:
         return {"error": str(e)}
 
-
-# Function to generate 5 questions using Gemini API
 def generate_questions(code):
     try:
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={GEMINI_API_KEY}"
-        headers = {'Content-Type': 'application/json'}
-        payload = {
-            "contents": [
-                {
-                    "parts": [
-                        {
-                            "text": f"Analyze the following code and generate 5 conceptual or practical questions:\n\n{code}"
-                        }
-                    ]
-                }
-            ]
+        MISTRAL_API_KEY = "sAtFQbj6YlnK1TXe7H5kJdPOSfnDdIBo" #replace
+        url = "https://api.mistral.ai/v1/chat/completions"
+        headers = {
+            "Authorization": f"Bearer {MISTRAL_API_KEY}",
+            "Content-Type": "application/json"
         }
-
+        payload = {
+            "model": "mistral-medium",
+            "messages": [{"role": "user", "content": f"Analyze the following code and generate 5 conceptual or practical questions:\n\n{code}"}]
+        }
         response = requests.post(url, headers=headers, json=payload)
 
         if response.status_code == 200:
             result = response.json()
-            questions = result.get("candidates", [{}])[0].get("content", {}).get("parts", [{}])[0].get("text", "").strip()
+            questions = result["choices"][0]["message"]["content"].strip()
             return questions.split("\n")
         else:
             return [f"Error: {response.status_code} - {response.text}"]
     except Exception as e:
         return [f"Error generating questions: {str(e)}"]
 
-# Function to extract Java class name
 def extract_java_class_name(code):
     import re
     match = re.search(r'public\s+class\s+(\w+)', code)
     return match.group(1) if match else None
 
-def correct_code_using_gemini(code):
+def correct_code_using_mistral(code):
     try:
-        GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
-        if not GEMINI_API_KEY:
-            return "Error: Gemini API key not set"
-
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key={GEMINI_API_KEY}"
-        headers = {"Content-Type": "application/json"}
+        MISTRAL_API_KEY = "sAtFQbj6YlnK1TXe7H5kJdPOSfnDdIBo" #replace
+        url = "https://api.mistral.ai/v1/chat/completions"
+        headers = {
+            "Authorization": f"Bearer {MISTRAL_API_KEY}",
+            "Content-Type": "application/json"
+        }
         payload = {
-            "contents": [
-                {
-                    "parts": [
-                        {
-                            "text": f"Correct the following code and improve it:\n\n{code}"
-                        }
-                    ]
-                }
-            ]
+            "model": "mistral-medium",
+            "messages": [{"role": "user", "content": f"Correct the following code and improve it:\n\n{code}"}]
         }
 
         response = requests.post(url, headers=headers, json=payload)
 
         if response.status_code == 200:
             response_data = response.json()
-            corrected_code = response_data["candidates"][0]["content"]["parts"][0]["text"]
+            corrected_code = response_data["choices"][0]["message"]["content"]
             return corrected_code.strip()
         else:
             return f"Error: {response.status_code} - {response.text}"
     except Exception as e:
         return f"Error: {str(e)}"
-# Run Flask app
+
+def generate_execution_steps(tree, code):
+    steps = []
+    lines = code.split('\n')
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Assign):
+            line_no = node.lineno -1
+            target = ast.unparse(node.targets[0])
+            value = ast.unparse(node.value)
+            steps.append({
+                "lineNumber": line_no,
+                "stepDescription": f"{target} = {value}"
+            })
+        elif isinstance(node, ast.Expr):
+            line_no = node.lineno -1
+            value = ast.unparse(node.value)
+            steps.append({
+                "lineNumber": line_no,
+                "stepDescription": f"{value}"
+            })
+        elif isinstance(node, ast.If):
+            line_no = node.lineno - 1;
+            test = ast.unparse(node.test)
+            steps.append({
+                "lineNumber": line_no,
+                "stepDescription": f"If {test}"
+            })
+
+    return steps
+
 if __name__ == '__main__':
     app.run(debug=True)

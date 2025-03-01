@@ -1,10 +1,10 @@
 let watchHistory = JSON.parse(localStorage.getItem("watchHistory")) || [];
 
-// Auto-resize textarea based on input content
 function autoResize(textarea) {
     textarea.style.height = "auto";
     textarea.style.height = textarea.scrollHeight + "px";
 }
+
 let selectedHistoryIndex = null;
 
 function loadCodeFromHistory(index) {
@@ -14,25 +14,24 @@ function loadCodeFromHistory(index) {
 }
 
 document.addEventListener("DOMContentLoaded", function() {
-  document.getElementById("history-confirm-yes").addEventListener("click", () => {
-      const code = watchHistory[selectedHistoryIndex].code;
-      const codeTextArea = document.getElementById("code");
-      codeTextArea.value = code;
-      autoResize(codeTextArea);
-      document.getElementById("history-confirmation").style.display = "none";
-      document.getElementById("main-container").classList.remove("blur-background");
-      toggleWatchHistory();
-      selectedHistoryIndex = null;
-  });
+    document.getElementById("history-confirm-yes").addEventListener("click", () => {
+        const code = watchHistory[selectedHistoryIndex].code;
+        const codeTextArea = document.getElementById("code");
+        codeTextArea.value = code;
+        autoResize(codeTextArea);
+        document.getElementById("history-confirmation").style.display = "none";
+        document.getElementById("main-container").classList.remove("blur-background");
+        toggleWatchHistory();
+        selectedHistoryIndex = null;
+    });
 
-  document.getElementById("history-confirm-no").addEventListener("click", () => {
-      document.getElementById("history-confirmation").style.display = "none";
-      document.getElementById("main-container").classList.remove("blur-background");
-      selectedHistoryIndex = null;
-  });
+    document.getElementById("history-confirm-no").addEventListener("click", () => {
+        document.getElementById("history-confirmation").style.display = "none";
+        document.getElementById("main-container").classList.remove("blur-background");
+        selectedHistoryIndex = null;
+    });
 });
 
-// ... (rest of your JavaScript) ...
 async function debugCode() {
     const code = document.getElementById("code").value;
     const language = document.getElementById("language").value;
@@ -43,19 +42,21 @@ async function debugCode() {
     const button = document.getElementById("runCodeBtn");
     const buttonText = document.getElementById("buttonText");
     const autoCorrectBtn = document.getElementById("autoCorrectBtn");
+    const visualizationDiv = document.getElementById("visualization-output");
 
     outputDiv.innerHTML = "Your output will be displayed here";
     questionsDiv.innerHTML = "";
     spinner.style.display = "block";
     buttonText.innerHTML = "Running";
     autoCorrectBtn.style.display = "none";
+    visualizationDiv.innerHTML = "";
 
     const response = await fetch("http://127.0.0.1:5000/debug", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
         },
-        body: JSON.stringify({ code, language, user_input: userInput }),
+        body: JSON.stringify({code, language, user_input: userInput}),
     });
 
     const result = await response.json();
@@ -68,7 +69,6 @@ async function debugCode() {
         outputDiv.innerHTML = `<pre class="error-output">${result.error}</pre>`;
     }
 
-    // Display Generated Questions
     if (result.questions) {
         questionsDiv.innerHTML = result.questions
             .map((q) => `<li>${q}</li>`)
@@ -78,31 +78,49 @@ async function debugCode() {
     }
 
     spinner.style.display = "none";
-
-    // Disable button to prevent multiple clicks
     button.disabled = true;
 
     try {
-        // Simulate code execution delay (replace with actual execution logic)
         await new Promise((resolve) => setTimeout(resolve, 0));
-
-        // After execution, restore the button text
         buttonText.innerHTML = "Run Code";
     } catch (error) {
         buttonText.innerHTML = "Run Code";
     }
 
-    // Re-enable button after execution
     button.disabled = false;
 
-    // Create history item *before* updating the display
     const historyItem = {
         code: code,
         status: result.output ? "success" : "error",
     };
-    watchHistory.push(historyItem); // Add to history
-
+    watchHistory.push(historyItem);
     updateHistoryDisplay();
+
+    if (result.execution_steps) {
+        animateExecution(result.execution_steps, code);
+    }
+}
+
+function animateExecution(steps, fullCode) {
+    let stepIndex = 0;
+    const codeLines = fullCode.split("\n");
+    const visualizationDiv = document.getElementById("visualization-output");
+    const interval = setInterval(() => {
+        if (stepIndex < steps.length) {
+            let highlightedCode = codeLines.map((line, index) => {
+                if (index === steps[stepIndex].lineNumber) {
+                    return `<span style="background-color: yellow;">${line}</span>`;
+                }
+                return line;
+            }).join("<br>");
+
+            // Corrected template literal:
+            visualizationDiv.innerHTML = `<pre>${highlightedCode}</pre><div>${steps[stepIndex].stepDescription}</div>`;
+            stepIndex++;
+        } else {
+            clearInterval(interval);
+        }
+    }, 1000);
 }
 
 async function autoCorrectCode() {
@@ -123,13 +141,12 @@ async function autoCorrectCode() {
 
     if (result.corrected_code) {
         correctedCodeDiv.innerHTML = result.corrected_code;
-        autoResize(correctedCodeDiv); // Auto resize after correction
+        autoResize(correctedCodeDiv);
         document.getElementById("copyCorrectedCodeBtn").style.display = "block";
     } else {
         correctedCodeDiv.innerHTML = "No correction available.";
     }
 
-    // After correction, restore the button text
     autoCorrectText.innerHTML = "Auto Correct";
 }
 
@@ -152,7 +169,7 @@ function pasteText(elementId) {
     const element = document.getElementById(elementId);
     navigator.clipboard.readText().then(text => {
         element.value = text;
-        autoResize(element); // Auto resize after pasting
+        autoResize(element);
     });
 }
 
